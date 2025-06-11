@@ -1,4 +1,6 @@
 using MediatR;
+using OrderService.Integration;
+using OrderService.Messaging;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,12 @@ builder.Services.AddSwaggerGen();
 
 // Register MediatR
 builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+
+// Register the HTTP Client
+builder.Services.AddHttpClient<INotificationClient, NotificationClient>();
+
+//Register IKafkaProducer
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
 var app = builder.Build();
 
