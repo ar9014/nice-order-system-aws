@@ -13,6 +13,9 @@ builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
 var app = builder.Build();
 
+// Set custom port (5000)
+app.Urls.Add("http://localhost:5000");
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
