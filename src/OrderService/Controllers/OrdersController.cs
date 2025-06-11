@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using OrderService.Caching;
 using OrderService.Commands;
 using OrderService.Models;
 
@@ -10,10 +11,12 @@ namespace OrderService.Controllers;
 public class OrdersController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly RedisCacheService _cacheService;
 
-    public OrdersController(IMediator mediator)
+    public OrdersController(IMediator mediator, RedisCacheService cacheService)
     {
         _mediator = mediator;
+        _cacheService = cacheService;
     }
 
     // POST /orders
@@ -21,14 +24,22 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderCommand command)
     {
         var createdOrder = await _mediator.Send(command);
+        await _cacheService.CacheOrderAsync(createdOrder);
         return CreatedAtAction(nameof(GetOrderById), new { id = createdOrder.OrderId }, createdOrder);
     }
 
     // GET /orders/{id} (mock implementation for now)
     [HttpGet("{id}")]
-    public IActionResult GetOrderById(Guid id)
+    public async Task<IActionResult> GetOrderById(Guid id)
+{
+    var cached = await _cacheService.GetOrderAsync(id);
+    if (cached != null)
     {
-        // Real implementation will use Redis (coming soon)
-        return Ok(new { Message = $"Mock response for order {id}" });
+        Console.WriteLine($"[Redis] Cache hit for {id}");
+        return Ok(cached);
     }
+
+    Console.WriteLine($"[Redis] Cache miss for {id}");
+    return NotFound(new { Message = $"Order {id} not found in cache." });
+}
 }

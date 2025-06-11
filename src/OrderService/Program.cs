@@ -1,6 +1,8 @@
 using MediatR;
+using OrderService.Caching;
 using OrderService.Integration;
 using OrderService.Messaging;
+using StackExchange.Redis;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,8 +18,12 @@ builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 // Register the HTTP Client
 builder.Services.AddHttpClient<INotificationClient, NotificationClient>();
 
-//Register IKafkaProducer
+// Register IKafkaProducer
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
+
+// Regsiter Redis
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
+builder.Services.AddScoped<RedisCacheService>();
 
 var app = builder.Build();
 
