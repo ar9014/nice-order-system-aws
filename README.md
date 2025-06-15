@@ -1,152 +1,152 @@
-# 🛒 NICE Order & Notification Microservices
+# Nice.OrderSystem
 
-A technical solution to NICE Systems' .NET assignment, showcasing a modular microservices-based backend using modern .NET practices.
-
----
-
-## 📦 Project Structure
-
-```
-Nice.OrderSystem/
-├── src/
-│   ├── OrderService/             # Main microservice (API, Kafka, Redis, MediatR)
-│   ├── NotificationService/      # Mock HTTP service to receive notifications
-│   └── OrderService.Tests/       # Unit tests using xUnit and Moq
-├── docker-compose.yml            # Redis + Kafka + Zookeeper services
-├── Nice.OrderSystem.sln
-└── README.md
-```
+A distributed microservices-based Order Management system built using ASP.NET Core (.NET 9), Docker Compose, Redis, Kafka, MediatR, and Polly. Deployed and tested on AWS EC2 Free Tier.
 
 ---
 
-## ✅ Features Implemented
+## 🧱 Architecture Overview
 
-| Feature                          | Status |
-|----------------------------------|--------|
-| REST API (`POST /orders`)        | ✅     |
-| REST API (`GET /orders/{id}`)    | ✅     |
-| MediatR (CQRS pattern)           | ✅     |
-| HTTP integration with retry (Polly) | ✅  |
-| Kafka event publishing (`orders.created`) | ✅ |
-| Redis caching for GET endpoint   | ✅     |
-| Unit tests for business logic    | ✅     |
-| Swagger for both APIs            | ✅     |
+- **OrderService** – Handles order creation, retrieval, and publishes events to Kafka.
+- **NotificationService** – Receives events via HTTP and handles external notifications.
+- **Redis** – Caches order data for quick retrieval.
+- **Kafka** – Asynchronous messaging between services.
+- **Docker Compose** – Manages service orchestration.
 
 ---
 
-## 🧱 Tech Stack
+## 🚀 Features
 
-- **.NET 8**
-- **MediatR** – For clean command-handling
-- **Polly** – Retry policy for HTTP calls
-- **Confluent.Kafka** – Kafka producer
-- **StackExchange.Redis** – Redis caching
-- **xUnit & Moq** – Unit testing
-- **Docker** – Kafka, Redis, Zookeeper setup
+- RESTful APIs for order operations
+- Redis caching with StackExchange.Redis
+- Kafka producer integration
+- Polly retry logic for outbound HTTP
+- Inter-service HTTP communication
+- Full Dockerized setup (local or cloud)
 
 ---
 
-## 🚀 How to Run Locally
+## 🧪 How to Run Locally
 
-### 1. 🐳 Start Redis + Kafka via Docker
+### 🔧 Prerequisites
+
+- [.NET 9 SDK (preview)](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Docker](https://www.docker.com/products/docker-desktop)
+- Git
+
+### ▶️ Local Development (without Docker)
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/ar9014/nice-order-system.git
+   cd nice-order-system
+   ```
+
+2. Run Redis and Kafka using Docker:
+   ```bash
+   docker-compose up redis kafka zookeeper
+   ```
+
+3. Run services:
+   ```bash
+   dotnet run --project src/OrderService/OrderService.csproj
+   dotnet run --project src/NotificationService/NotificationService.csproj
+   ```
+
+---
+
+## 🐳 Docker Compose Deployment
+
+### ▶️ Run All Services (Locally or on AWS EC2)
 
 ```bash
-docker-compose up -d
+docker-compose down -v    # Clean old containers
+docker-compose up --build -d
 ```
 
-> This launches Kafka, Zookeeper, and Redis on the default ports.
+### 📦 Exposed Ports
 
-### 2. ▶️ Run NotificationService (port 7000)
+| Service             | Port     |
+|---------------------|----------|
+| OrderService        | 5000     |
+| NotificationService | 7000     |
+| Redis               | 6379     |
+| Kafka               | 9092     |
 
-```bash
-dotnet run --project src/NotificationService
+---
+
+## ☁️ AWS EC2 Deployment (Free Tier)
+
+### ✅ Steps Summary
+
+1. Launch Ubuntu EC2 (`t2.micro`)
+2. SSH into the instance
+3. Install Docker + Docker Compose
+4. Clone the repo:
+   ```bash
+   git clone https://github.com/ar9014/nice-order-system.git Nice.OrderSystem.AWS
+   cd Nice.OrderSystem.AWS
+   ```
+
+5. Build and start services:
+   ```bash
+   docker-compose up --build -d
+   ```
+
+6. Ensure port `5000` is allowed in EC2 security group
+
+---
+
+## 🔍 API Reference
+
+### 📬 Create Order
+
+```
+POST /orders
 ```
 
-### 3. ▶️ Run OrderService (port 5000)
-
-```bash
-dotnet run --project src/OrderService
+**Body:**
+```json
+{
+  "customerId": "8a97f2f9-b4c4-497c-a7d4-f77e8d261f6a",
+  "productItems": [
+    { "productId": "A", "quantity": 1 },
+    { "productId": "B", "quantity": 2 }
+  ]
+}
 ```
 
-### 4. 🧪 Test in Swagger:
-
-- [http://localhost:5000/swagger](http://localhost:5000/swagger) – OrderService
-- [http://localhost:7000/swagger](http://localhost:7000/swagger) – NotificationService
-
 ---
 
-## 💡 Architecture Decisions
+### 📥 Get Order
 
-### ✅ Why MediatR?
-- Enforces separation of concerns
-- Allows clean testing of handlers
-- Aligns with CQRS pattern
-
-### ✅ Why Redis?
-- Fast, in-memory caching for `GET /orders/{id}`
-- Reduces load on storage/backend services
-
-### ✅ Why Kafka?
-- Enables scalable, async event-driven communication
-- Easily integrates with downstream consumers in production
-
-### ✅ Why Polly?
-- Adds resilience in HTTP integration (NotificationService)
-- Handles transient faults with exponential backoff
-
----
-
-## 🔐 Assumptions
-
-- Order persistence is simulated (no database layer).
-- NotificationService is mocked (local-only).
-- Kafka is only producing to `orders.created`; no consumers implemented.
-- Redis is used solely for order read-caching.
-
----
-
-## 🧪 Testing
-
-```bash
-dotnet test
+```
+GET /orders/{orderId}
 ```
 
-- Unit-tested: `CreateOrderHandler` (business logic)
-- Dependencies (`INotificationClient`, `IKafkaProducer`) are mocked using Moq
-- Assertions use FluentAssertions
+Returns order details (from cache if available).
 
 ---
 
-## 📋 NFR (Non-Functional Requirements)
+## 🛠️ Technologies Used
 
-| Concern        | Approach |
-|----------------|----------|
-| **Resilience** | Polly retries for NotificationService |
-| **Scalability**| Kafka for async communication |
-| **Performance**| Redis cache for GET endpoint |
-| **Security**   | Assumes internal/private API; security can be layered in with API gateway or auth middleware |
-| **Reliability**| Logs to console; can be extended to Serilog + CloudWatch in production |
-
----
-
-## 🛠️ Troubleshooting & Monitoring
-
-| Concern         | Solution |
-|------------------|----------|
-| Kafka issues     | Check if port `9092` is open, and Kafka container is healthy |
-| Redis not caching| Ensure container is running at `localhost:6379`, and key is not expired |
-| HTTP errors      | Retry logic already built-in with Polly (3 tries, exponential backoff) |
-| View logs        | Console output is rich with tracing info for Kafka, Redis, and MediatR |
+- ASP.NET Core (.NET 9 Preview)
+- MediatR
+- Redis (StackExchange)
+- Kafka (Confluent + rdkafka)
+- Docker & Docker Compose
+- Polly for resilience
+- AWS EC2 Free Tier (Ubuntu)
 
 ---
 
-## ☁️ (Bonus) AWS Deployment Plan (Optional)
+## 👨‍💻 Author
 
-If required, can be included in a separate section or Markdown file (`AWS-Deployment.md`).
+**Akshay Raut**  
+Senior Software Engineer – Backend & Cloud Solutions  
+[GitHub Profile](https://github.com/ar9014)
 
 ---
 
-## ✍️ Author
+## 📌 License
 
-Developed by **[Akshay Raut / ar9014]**  
-For NICE Systems – Backend .NET Technical Task
+MIT License – do whatever you want 😄
