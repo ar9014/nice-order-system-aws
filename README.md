@@ -37,7 +37,7 @@ A distributed microservices-based Order Management system built using ASP.NET Co
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/ar9014/nice-order-system.git
+   git clone https://github.com/ar9014/nice-order-system-aws.git
    cd nice-order-system
    ```
 
@@ -83,7 +83,7 @@ docker-compose up --build -d
 3. Install Docker + Docker Compose
 4. Clone the repo:
    ```bash
-   git clone https://github.com/ar9014/nice-order-system.git Nice.OrderSystem.AWS
+   git clone https://github.com/ar9014/nice-order-system-aws.git Nice.OrderSystem.AWS
    cd Nice.OrderSystem.AWS
    ```
 
